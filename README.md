@@ -11,9 +11,9 @@
 
 clone the repository: 
 
-git pull https://github.com/simontudo/gym-pull.git
-cd gym-pull
-pip install -e .
+	git pull https://github.com/simontudo/gym-pull.git
+	cd gym-pull
+	pip install -e .
 
 To run the add-on, you need to import gym, and then gym-pull:
 
