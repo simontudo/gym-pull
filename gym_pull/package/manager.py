@@ -18,10 +18,12 @@ gym_abs_path = os.path.dirname(os.path.abspath(gym.__file__))
 user_env_cache_name = '.envs.json'
 pip_exec = 'pip3' if sys.version_info[0] == 3 else 'pip2'
 
+
 class PackageManager(object):
     """
     This object is responsible for downloading and registering user environments (and their versions).
     """
+
     def __init__(self):
         self.env_ids = set()
         self.user_packages = {}
@@ -46,7 +48,8 @@ class PackageManager(object):
             for line in cache:
                 user_package, registered_envs = self._load_package(line.rstrip('\n'), installed_packages)
                 if logger.level <= logging.DEBUG:
-                    logger.debug('Installed %d user environments from package "%s"', len(registered_envs), user_package['name'])
+                    logger.debug('Installed %d user environments from package "%s"', len(registered_envs),
+                                 user_package['name'])
         if self.cache_needs_update:
             self._update_cache()
         if len(self.env_ids) > 0:
@@ -86,7 +89,7 @@ where username is a GitHub username, repository is the name of a GitHub reposito
         logger.info('Installing pip package from "%s"', git_url)
         packages_before = self._list_packages()
         return_code = self._run_cmd('{} install --upgrade git+{}'.format(pip_exec, git_url))
-        if return_code != 0:        # Failed - pip will display the error message
+        if return_code != 0:  # Failed - pip will display the error message
             return
 
         # Detecting new and upgraded packages
@@ -136,9 +139,11 @@ where username is a GitHub username, repository is the name of a GitHub reposito
             user_package, registered_envs = self._load_package(json_line, packages_after)
             for new_env in registered_envs:
                 if not new_env.lower().startswith('{}/'.format(username.lower())):
-                    if len(uninstall_packages) == 0:    # We don't need to repeat the message multiple times
-                        logger.warn('This package does not respect the naming convention and will be uninstalled to avoid conflicts. '
-                                    'Expected user environment to start with "{}/", but got "{}" instead.'.format(username, new_env))
+                    if len(uninstall_packages) == 0:  # We don't need to repeat the message multiple times
+                        logger.warn(
+                            'This package does not respect the naming convention and will be uninstalled to avoid conflicts. '
+                            'Expected user environment to start with "{}/", but got "{}" instead.'.format(username,
+                                                                                                          new_env))
                     uninstall_packages.append(package_name)
             new_envs = new_envs | registered_envs
 
@@ -158,7 +163,8 @@ where username is a GitHub username, repository is the name of a GitHub reposito
             for env in sorted(new_envs, key=lambda s: s.lower()):
                 logger.info('Successfully registered the environment: "%s"', env)
         else:
-            logger.info('No environments have been registered. The following packages were modified: %s', ','.join(modified_packages))
+            logger.info('No environments have been registered. The following packages were modified: %s',
+                        ','.join(modified_packages))
         return
 
     def _run_cmd(self, cmd):
@@ -222,13 +228,14 @@ where username is a GitHub username, repository is the name of a GitHub reposito
         elif package_name not in installed_packages:
             self.cache_needs_update = True
             logger.warn('The package "%s" does not seem to be installed anymore. User environments from this '
-                        'package will not be registered, and the package will no longer be loaded on `import gym`', package_name)
+                        'package will not be registered, and the package will no longer be loaded on `import gym`',
+                        package_name)
         elif module_name in sys.modules:
             self.cache_needs_update = True
             try:
                 reload_module(sys.modules[module_name])
             except ImportError:
-                if 'gym' in package_name:   # To avoid uninstalling failing dependencies
+                if 'gym' in package_name:  # To avoid uninstalling failing dependencies
                     logger.warn('Unable to reload the module "%s" from package "%s" (%s). This is usually caused by a '
                                 'invalid pip package. The package will be uninstalled and no longer be loaded on `import gym`.\n',
                                 module_name, package_name, installed_packages[package_name])
@@ -239,7 +246,7 @@ where username is a GitHub username, repository is the name of a GitHub reposito
             try:
                 __import__(module_name)
             except ImportError:
-                if 'gym' in package_name:   # To avoid uninstalling failing dependencies
+                if 'gym' in package_name:  # To avoid uninstalling failing dependencies
                     self.cache_needs_update = True
                     logger.warn('Unable to import the module "%s" from package "%s" (%s). This is usually caused by a '
                                 'invalid pip package. The package will be uninstalled and no longer be loaded on `import gym`.\n',
@@ -258,6 +265,7 @@ where username is a GitHub username, repository is the name of a GitHub reposito
             new_spec.package = '{} ({})'.format(user_package['name'], user_package['version'])
             self.env_ids.add(new_env.lower())
         return user_package, registered_envs
+
 
 # Have a global manager
 manager = PackageManager()
