@@ -3,7 +3,7 @@ import logging
 import sys
 
 from gym import error
-from gym.configuration import logger_setup, undo_logger_setup
+# from gym.configuration import logger_setup, undo_logger_setup
 from gym.utils import reraise
 
 logger = logging.getLogger(__name__)
@@ -26,23 +26,21 @@ def sanity_check_dependencies():
 #
 # (Note: this needs to happen before importing the rest of gym, since
 # we may print a warning at load time.)
-logger_setup(logger)
-del logger_setup
+# logger_setup(logger)
+# del logger_setup
+
 
 sanity_check_dependencies()
 
 from gym.core import Env, Space, Wrapper
 from gym.envs import make, spec
-from gym.scoreboard.api import upload
 
 # *-*-*-*-*-*-*-* Monkey Patching *-*-*-*-*-*--*-*-*-*
 import gym
-import gym_pull.scoreboard.api
+# import gym_pull.scoreboard.api
 import gym_pull.monitoring.monitor
 import gym_pull.envs.registration
-gym.upload = gym_pull.scoreboard.api.upload
-gym.scoreboard.api.upload = gym_pull.scoreboard.api.upload
-gym.scoreboard.api.upload_training_data = gym_pull.scoreboard.api.upload_training_data
+# gym.upload = gym_pull.scoreboard.api.upload
 gym.envs.registration.env_id_re = gym_pull.envs.registration.env_id_re
 # *-*-*-*-*-*-*-* /Monkey Patching *-*-*-*-*-*--*-*-*-*
 
