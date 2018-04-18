@@ -1,24 +1,20 @@
 import logging
 import pkg_resources
 import re
-import sys
-
-# +-+--+-+-+-+ PATCHING --+-+-+-+-+-+
 import gym
-# +-+--+-+-+-+ /PATCHING --+-+-+-+-+-+
 from gym import error
 
 logger = logging.getLogger(__name__)
 # This format is true today, but it's *not* an official spec.
-# >>>>>>>>> START changes >>>>>>>>>>>>>>>>>>>>>>>>
 # [username/](env-name)-v(version)    env-name is group 1, version is group 2
 env_id_re = re.compile(r'^(?:[\w:-]+\/)?([\w:-]+)-v(\d+)$')
-# <<<<<<<<< END changes <<<<<<<<<<<<<<<<<<<<<<<<<<
+
 
 def load(name):
     entry_point = pkg_resources.EntryPoint.parse('x={}'.format(name))
     result = entry_point.load(False)
     return result
+
 
 class EnvSpec(object):
     """A specification for a particular instance of the environment. Used
@@ -40,7 +36,8 @@ class EnvSpec(object):
         trials (int): The number of trials run in official evaluation
     """
 
-    def __init__(self, id, entry_point=None, timestep_limit=1000, trials=100, reward_threshold=None, local_only=False, kwargs=None, nondeterministic=False, wrappers=None):
+    def __init__(self, id, entry_point=None, timestep_limit=1000, trials=100, reward_threshold=None, local_only=False,
+                 kwargs=None, nondeterministic=False, wrappers=None):
         self.id = id
         # Evaluation parameters
         self.timestep_limit = timestep_limit
@@ -53,7 +50,9 @@ class EnvSpec(object):
         # useful.
         match = env_id_re.search(id)
         if not match:
-            raise error.Error('Attempted to register malformed environment ID: {}. (Currently all IDs must be of the form {}.)'.format(id, env_id_re.pattern))
+            raise error.Error(
+                'Attempted to register malformed environment ID: {}. (Currently all IDs must be of the form {}.)'.format(
+                    id, env_id_re.pattern))
         self._env_name = match.group(1)
         self._entry_point = entry_point
         self._local_only = local_only
@@ -63,7 +62,9 @@ class EnvSpec(object):
     def make(self):
         """Instantiates an instance of the environment with appropriate kwargs"""
         if self._entry_point is None:
-            raise error.Error('Attempting to make deprecated env {}. (HINT: is there a newer registered version of this env?)'.format(self.id))
+            raise error.Error(
+                'Attempting to make deprecated env {}. (HINT: is there a newer registered version of this env?)'.format(
+                    self.id))
 
         cls = load(self._entry_point)
         env = cls(**self._kwargs)
@@ -90,26 +91,22 @@ class EnvRegistry(object):
         self.env_specs = {}
 
     def make(self, id):
-        # +-+--+-+-+-+ PATCHING --+-+-+-+-+-+
         _self = gym.envs.registry
-        # +-+--+-+-+-+ /PATCHING --+-+-+-+-+-+
         logger.info('Making new env: %s', id)
         spec = _self.spec(id)
         return spec.make()
 
     def all(self):
-        # +-+--+-+-+-+ PATCHING --+-+-+-+-+-+
         _self = gym.envs.registry
-        # +-+--+-+-+-+ /PATCHING --+-+-+-+-+-+
         return _self.env_specs.values()
 
     def spec(self, id):
-        # +-+--+-+-+-+ PATCHING --+-+-+-+-+-+
         _self = gym.envs.registry
-        # +-+--+-+-+-+ /PATCHING --+-+-+-+-+-+
         match = env_id_re.search(id)
         if not match:
-            raise error.Error('Attempted to look up malformed environment ID: {}. (Currently all IDs must be of the form {}.)'.format(id.encode('utf-8'), env_id_re.pattern))
+            raise error.Error(
+                'Attempted to look up malformed environment ID: {}. (Currently all IDs must be of the form {}.)'.format(
+                    id.encode('utf-8'), env_id_re.pattern))
 
         try:
             return _self.env_specs[id]
@@ -125,36 +122,27 @@ class EnvRegistry(object):
                 raise error.UnregisteredEnv('No registered env with id: {}'.format(id))
 
     def register(self, id, **kwargs):
-        # +-+--+-+-+-+ PATCHING --+-+-+-+-+-+
         _self = gym.envs.registry
-        # +-+--+-+-+-+ /PATCHING --+-+-+-+-+-+
         if id in _self.env_specs:
             raise error.Error('Cannot re-register id: {}'.format(id))
         _self.env_specs[id] = EnvSpec(id, **kwargs)
 
-# >>>>>>>>> START changes >>>>>>>>>>>>>>>>>>>>>>>>
     def deregister(self, id):
-        # +-+--+-+-+-+ PATCHING --+-+-+-+-+-+
         _self = gym.envs.registry
-        # +-+--+-+-+-+ /PATCHING --+-+-+-+-+-+
         if not id in _self.env_specs:
             logger.warn('Unable to deregister id: %s. Are you certain it is registered?', id)
         else:
             del _self.env_specs[id]
 
     def list(self):
-        # +-+--+-+-+-+ PATCHING --+-+-+-+-+-+
         _self = gym.envs.registry
-        # +-+--+-+-+-+ /PATCHING --+-+-+-+-+-+
         return sorted([spec.id for spec in _self.all()], key=lambda s: s.lower())
-# <<<<<<<<< END changes <<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 
 # Have a global registry
 registry = EnvRegistry()
 register = registry.register
 make = registry.make
 spec = registry.spec
-# >>>>>>>>> START changes >>>>>>>>>>>>>>>>>>>>>>>>
 deregister = registry.deregister
 list = registry.list
-# <<<<<<<<< END changes <<<<<<<<<<<<<<<<<<<<<<<<<<<
